@@ -17,7 +17,7 @@ public class Baby {
 	private String name;
 	
 	@Past
-	@ApiModelProperty(notes = "Birth date cannot be in the past" )
+	@ApiModelProperty(notes = "Birth date cannot be in the future" )
 	private Date birthDate;
 	
 	private String motherName;

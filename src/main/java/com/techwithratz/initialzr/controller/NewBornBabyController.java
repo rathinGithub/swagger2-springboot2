@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.techwithratz.initialzr.exception.BabyBadInputException;
@@ -28,22 +29,22 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
 @RestController
-@Api(tags="Baby Management Restful services", value="BabyController")
+@Api(tags = "Baby Management Restful services", value = "BabyController")
 public class NewBornBabyController {
 	private Logger logger = LogManager.getLogger(NewBornBabyController.class);
 
 	@Autowired
 	NewBornBabyService newBornBabyService;
 
-	@ApiOperation(value="Retrieve list of babies")
+	@ApiOperation(value = "Retrieve list of babies")
 	@GetMapping(path = "/babies")
 	public List<Baby> getBabies() {
 		return newBornBabyService.findAll();
 	}
 
 	@PostMapping(path = "/babies")
-	public ResponseEntity<Baby> saveBaby(@ApiParam("New Born baby information to be created")
-	                                     @Valid @RequestBody Baby baby) {
+	public ResponseEntity<Baby> saveBaby(
+			@ApiParam("New Born baby information to be created") @Valid @RequestBody Baby baby) {
 		if (baby.getName() == null || baby.getBirthDate() == null) {
 			logger.info("Baby object is empty");
 			throw new BabyBadInputException("Please enter all the details");
@@ -56,11 +57,18 @@ public class NewBornBabyController {
 
 	@GetMapping(path = "/babies/{id}")
 	public ResponseEntity<Object> getBaby(@PathVariable int id) {
-		Baby baby = newBornBabyService.findBaby(id);
-		if (baby == null) {
-			throw new BabyNotFoundException("id--> " + id);
+		ResponseEntity responseEntity = null;
+		try {
+			Baby baby = newBornBabyService.findBaby(id);
+			if (baby == null) {
+				throw new BabyNotFoundException("Baby Not Found Exception - id--> " + id);
+			}
+			responseEntity = ResponseEntity.status(HttpStatus.OK).body(baby);
+		} catch (BabyNotFoundException e) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Baby Not Found Exception", e);
 		}
-		return ResponseEntity.status(HttpStatus.OK).body(baby);
+
+		return responseEntity;
 	}
 
 	@DeleteMapping(path = "/babies/{id}")
